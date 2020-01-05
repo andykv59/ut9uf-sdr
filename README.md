@@ -1,6 +1,6 @@
 # ut9uf-sat-sdr
  
-SDR HF, VHF, UHF SDR transciever for HAM radio AMSAT satellites
+SDR HF, VHF, UHF SDR transceiver for HAM radio AMSAT satellites
 
 Done:
  RX part:
