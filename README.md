@@ -3,18 +3,34 @@
 SDR HF, VHF, UHF SDR transciever for HAM radio AMSAT satellites
 
 Done:
- RX:
- QRP labs BPFs for HF, RF NE612 mixer, LM386 audio, si5351, 
- Teensy 3.2 + audio  shield, 2.2in 176x220 TFT Touch Display, optoencoder
+ RX part:
+ QRP labs BPFs for HF
+ RF NE612 mixer
+ LM386 audio
+ si5351 
+ Teensy 3.2
+ Teensy audio  shield
+ 2.2 inch 176x220 TFT Touch Display
+ Optoencoder
  
 In progress:
  Chasis
- hardware wiring into the box
+ Hardware wiring in the chasis
+ Power protection diode and wiring
+ Front panel
+ RF connectors on the back panel
+ Speaker
+ Shielding on the main board
  Band switching
+ Attenuator
  
 
 Todo:
 QO-100 downlink converter
 Satellites orbits prediction
 TX part
+Mike amp
+CW gen
+TX switching
+
 
