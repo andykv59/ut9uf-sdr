@@ -33,4 +33,6 @@ Mike amp
 CW gen
 TX switching
 
+Main and actual folder is 
+VFO_Si5351_v4
 
