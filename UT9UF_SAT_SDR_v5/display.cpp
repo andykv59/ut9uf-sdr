@@ -3,9 +3,8 @@
 #include "display.h"
 #include <Audio.h>
 #include <Adafruit_GFX.h>        // LCD Core graphics library
-//#include <Adafruit_QDTech.h>     // 1.8" TFT Module using Samsung S6D02A1 chip
-//#include <Adafruit_S6D02A1.h> // Hardware-specific library
-#include <Adafruit_ST7735.h>    // Hardware-specific library ST7735
+//#include <Adafruit_ST7735.h>    // Hardware-specific library ST7735
+#include <Adafruit_ILI9341.h>
 #include <Fonts/FreeSans9pt7b.h>
 #include <Fonts/FreeSans12pt7b.h>
 
@@ -22,20 +21,23 @@ extern Metro five_sec;
 float uv, uvold, dbuv, dbm, s;// microvolts, db-microvolts, s-units, volts, dbm, sold = old S-meter value, deltas = abs difference between sold and s
 //float line_gain = 0; // possibly different for different bands, see software DD4DH
 
+//extern Adafruit_ST7735 tft;
+extern Adafruit_ILI9341 tft;
 
-//extern Adafruit_QDTech tft;
-extern Adafruit_ST7735 tft;
 extern AudioAnalyzeFFT256  myFFT;      // FFT for Spectrum Display
 void show_s_meter_layout(void);
-extern AudioAnalyzePeak       Smeter;
+extern AudioAnalyzePeak Smeter;
 
 void setup_display(void) {
   
   // initialize the LCD display
 //  tft.init();
-  tft.initR(INITR_BLACKTAB);   // initialize a ST7735 chip, black tab
-  tft.setRotation(1);          // 1 - pins on the right side, 1 -90,2 +90,3 +180 
+  tft.begin();
+  tft.setRotation(3);
   tft.fillScreen(BLACK);
+
+  //tft.initR(INITR_BLACKTAB);   // initialize a ST7735 chip, black tab
+  //tft.setRotation(1);          // 1 - pins on the right side, 1 -90,2 +90,3 +180 
   tft.setTextColor(WHITE);
   tft.setTextWrap(true); 
   // Show mid screen tune position
@@ -47,14 +49,14 @@ void intro_display(void) {
   tft.setTextColor(WHITE);
   tft.setTextWrap(true);
   tft.setCursor(0, 30);
-  tft.print("Teensy SDR");
+  tft.print("UT9UF AMSAT SDR");
   //tft.setFont(&FreeSans9pt7b);
   tft.setCursor(0, 50);
-  tft.print("by VE3MKC");
+  tft.print("by Andy");
   tft.setCursor(0, 80);
-  tft.print("PA3BYA");
+  tft.print("origins PA3BYA VE3MKC");
   tft.setCursor(0, 100);
-  tft.print("version: 1.1");
+  tft.print("version: 0.1");
   //tft.print(MAIN_VERSION_NUMBER);
   tft.setCursor(0, 120);
   tft.print("build: ");
@@ -122,7 +124,8 @@ void show_waterfall(void) {
   //  FFT bins are 22khz/128=171hz wide 
   // cw peak should be around 11.6khz - 
   static uint16_t waterfall[80];  // array for simple waterfall display
-  static uint8_t w_index=0,w_avg;
+  //static uint8_t w_index=0,w_avg;
+  static uint8_t w_index=0;
   waterfall[w_index]=0;
   for (uint8_t y=66;y<67;++y)  // sum of bin powers near cursor - usb only
       waterfall[w_index]+=(uint8_t)(abs(myFFT.output[y])); // store bin power readings in circular buffer
@@ -229,8 +232,7 @@ void show_band(String bandname) {  // show band
 // show frequency
 void show_frequency(long int freq) { 
     char string[80];   // print format stuff
-    sprintf(string,"%d.%03d.%03d",freq/1000000,(freq-freq/1000000*1000000)/1000,
-          freq%1000 );
+    sprintf(string,"%d.%03d.%03d",freq/1000000,(freq-freq/1000000*1000000)/1000, freq%1000 );
     tft.fillRect(100,115,100,120,BLACK);
     tft.setCursor(100, 115);
     tft.setTextColor(WHITE);

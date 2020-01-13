@@ -10,13 +10,20 @@
 
 #define tft_led 0    // TFT back LED we use pin 0
 #define BACKLIGHT 0 // TFT back LED we use pin 0
-#define sclk 14      // SCLK can also use pin 14
-#define mosi 7       // MOSI can also use pin 7
-#define cs   2       // CS & DC can use pins 2, 6, 9, 10, 15, 20, 21, 22, 23
-#define dc   3       //  but certain pairs must NOT be used: 2+10, 6+9, 20+23, 21+22
-#define rst  1       // RST can use any pin
-//#define sdcs 4     // CS for SD card, can use any pin
+//#define sclk 14      // SCLK can also use pin 14
+#define TFT_CLK 14      // SCLK can also use pin 14
+//#define mosi 7       // MOSI can also use pin 7
+#define TFT_MOSI 7       // MOSI can also use pin 7
+//#define cs   2       // CS & DC can use pins 2, 6, 9, 10, 15, 20, 21, 22, 23
 
+
+#define TFT_CS   2       // CS & DC can use pins 2, 6, 9, 10, 15, 20, 21, 22, 23
+//#define dc   3       //  but certain pairs must NOT be used: 2+10, 6+9, 20+23, 21+22
+#define TFT_DC   3       //  but certain pairs must NOT be used: 2+10, 6+9, 20+23, 21+22
+//#define rst  1       // RST can use any pin
+#define TFT_RST  1       // RST can use any pin
+//#define sdcs 4     // CS for SD card, can use any pin
+int r = 0; // set TFT display rotation 0,1,2,3
 
 //SPI connections for Banggood 1.8" display
 //const int8_t sclk   = 14;
@@ -28,7 +35,9 @@
 #include <Metro.h>            //Comes with Teensy libs
 #include <Audio.h>            //Comes with Teensy libs
 #include <Adafruit_GFX.h>    // Core graphics library
-#include <Adafruit_ST7735.h> // TFT Hardware-specific library
+//#include <Adafruit_ST7735.h> // TFT Hardware-specific library for 1,8 inch non-sensor display
+#include <Adafruit_ILI9341.h> // TFT Hardware-specific library for 2,8 touch sensor display tjctm24028-spi
+//#include <Adafruit_STMPE610.h> // TFT touch sensor lib for 2,8
 #include <SPI.h>             // SPI comms for TFT
 #include <Wire.h>            // I2C comms for Si5351
 //#include "si5351.h"        // Si5351 library old one
@@ -45,13 +54,15 @@ Si5351 si5351;              //Take an instance of Si5351
 
 
 // TFT related
-#if defined(__SAM3X8E__)
-    #undef __FlashStringHelper::F(string_literal)
-    #define F(string_literal) string_literal
-#endif
+//#if defined(__SAM3X8E__)
+//    #undef __FlashStringHelper::F(string_literal)
+//    #define F(string_literal) string_literal
+//#endif
 
 // Option 1: use any pins but a little slower
-Adafruit_ST7735 tft = Adafruit_ST7735(cs, dc, mosi, sclk, rst);
+//Adafruit_ST7735 tft = Adafruit_ST7735(cd, dc, mosi, sclk, rst);
+
+Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_MOSI, TFT_CLK, TFT_RST);
 
 // Option 2: must use the hardware SPI pins
 // (for UNO thats sclk = 13 and sid = 11) and pin 10 must be
@@ -72,7 +83,7 @@ const int8_t BandSW =20;    // band selector
 const int8_t TuneSW =6;     // low for fast tune - encoder pushbutton
 
 
-//#define  DEBUG
+//#define  DEBUG  // if this mode is enabled - you MUST open port monitor in order to start radio
 
 // Setup the phased mode of si5351 - CLK0 and CLK2 are in use and phase 90 degrees shift is done by si5351
 // taken from http://py2ohh.w2c.com.br/
@@ -268,17 +279,22 @@ Metro waterfall_upd = Metro(25);  // Set up a Metro for waterfall updates
 #endif
  
 void setup(void) {
+  Serial.begin(9600);
+  Serial.println("Initializing Radio...");
+/*
   pinMode(tft_led, OUTPUT);     // TFT back LED pin mode
   digitalWrite(tft_led, HIGH);  // TFT back LED - on
-  Serial.begin(9600);
+*/
+   
+  
 
 #ifdef DEBUG
  while (!Serial) ; // wait for connection
- Serial.println("Initializing...");
- Serial.println("de UT9UF-SDR, hello!");
+ Serial.println("Entering debug mode...");
+ Serial.println("UT9UF-SAT-SDR, hello!");
 #endif
 
-  pinMode(BACKLIGHT, INPUT_PULLUP); // yanks up display BackLight signal
+  //pinMode(BACKLIGHT, INPUT_PULLUP); // yanks up display BackLight signal
   pinMode(ModeSW, INPUT_PULLUP);    // USB/LSB switch
   pinMode(BandSW, INPUT_PULLUP);    // filter width switch
   pinMode(TuneSW, INPUT_PULLUP);    // tuning rate = high
@@ -329,10 +345,11 @@ void setup(void) {
 
 
 // initialize the TFT and show signon message etc
-  SPI.setMOSI(7); // set up HW SPI for use with the audio card - alternate pins
-  SPI.setSCK(14);  
+  SPI.begin();
+  SPI.setMOSI(TFT_MOSI); // set up HW SPI for use with the audio card - alternate pins
+  SPI.setSCK(TFT_CLK);  
   setup_display();
-  //intro_display();
+  intro_display();
   main_display();
   delay(4000);
   //tft.fillScreen(BLACK);
