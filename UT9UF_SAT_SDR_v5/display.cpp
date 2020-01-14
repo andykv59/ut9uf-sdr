@@ -8,9 +8,9 @@
 //#include <Fonts/FreeSans9pt7b.h>
 //#include <Fonts/FreeSans12pt7b.h>
 
-#define pos_x_smeter 5
-#define pos_y_smeter 80
-#define s_w 10
+//#define pos_x_smeter 5
+//#define pos_y_smeter 80
+//#define s_w 10
 
 #define DEBUG_SMETER
 #ifdef DEBUG_SMETER
