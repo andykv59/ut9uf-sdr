@@ -4,6 +4,7 @@
 //
 // TFT definition - this Teensy3 native optimized version requires specific pins
 //
+#define ver "v.00.06.00"
 
 #include <asserts.h>
 #include <errors.h>
@@ -175,7 +176,7 @@ struct band bands[NUM_BANDS] = {
   28000000,"10M"   
 };
 
-#define STARTUP_BAND BAND_20M    // 
+#define STARTUP_BAND BAND_40M    // 
 #endif
 
 #define  SSB_USB  0
@@ -359,14 +360,23 @@ void setup(void) {
 // initialize the TFT and show signon message etc
   SPI.setMOSI(TFT_MOSI); // set up HW SPI for use with the audio card - alternate pins
   SPI.setSCK(TFT_CLK);  
+  
+  tft.begin();
+  tft.setRotation(3);           // 1 = Normal  0 = 90° 2 = 90° 3 = up-side-down
+  tft.fillScreen(BLACK);        // BLACK
   setup_display();
-  intro_display();
-  delay(4000);
-  main_display();
+  
+//  intro_display();
+//  delay(4000);
+
+//  main_display();
+
+  
   //delay(4000);
   //tft.fillScreen(BLACK);
   //tft.setCursor(0, 115);
   //tft.drawFastVLine(80, 0,60,RED);
+  
 #ifdef DEBUG
   Serial.println("setup-display ... done");
 #endif  
@@ -379,7 +389,19 @@ void setup(void) {
   Serial.print("evendivisor is ");
   Serial.println(evendivisor);
 #endif
-
+// here startup message
+  tft.setCursor(pos_x_frequency-6, pos_y_frequency);
+  tft.setTextSize(2);
+  tft.setTextColor(WHITE);
+  tft.print("UT9UF AMSAT-SDR based on Teensy-SDR tnx VE3MKC, DD4WH, PA0RWE"); 
+  tft.setCursor(pos_x_time,pos_y_time);
+  tft.setTextSize(1);
+  tft.setTextColor(WHITE);
+  tft.print(ver);             // Display Version
+  delay (2000);
+  tft.fillRect(pos_x_frequency-24, pos_y_frequency, 220, 16, BLACK);    // Clear startup text
+  tft.fillRect(pos_x_time, pos_y_time, 80, 8, BLACK);                   // erase for time display
+  
 
 // set up clk gen
   si5351.set_correction(0, SI5351_PLL_INPUT_XO);  // There is a calibration sketch in File/Examples/si5351Arduino-Jason where you can determine the correction by using the serial monitor
