@@ -23,7 +23,7 @@
 //#define rst  1       // RST can use any pin
 #define TFT_RST  1       // RST can use any pin
 //#define sdcs 4     // CS for SD card, can use any pin
-int r = 0; // set TFT display rotation 0,1,2,3
+//int r = 0; // set TFT display rotation 0,1,2,3
 
 //SPI connections for Banggood 1.8" display
 //const int8_t sclk   = 14;
@@ -82,8 +82,7 @@ const int8_t ModeSW =21;    // USB/LSB
 const int8_t BandSW =20;    // band selector
 const int8_t TuneSW =6;     // low for fast tune - encoder pushbutton
 
-
-//#define  DEBUG  // if this mode is enabled - you MUST open port monitor in order to start radio
+#define  DEBUG  // if this mode is enabled - you MUST open port monitor in order to start radio
 
 // Setup the phased mode of si5351 - CLK0 and CLK2 are in use and phase 90 degrees shift is done by si5351
 // taken from http://py2ohh.w2c.com.br/
@@ -161,7 +160,7 @@ struct band bands[NUM_BANDS] = {
   28000000,"10M"   
 };
 
-#define STARTUP_BAND BAND_40M    // 
+#define STARTUP_BAND BAND_20M    // 
 #endif
 
 #define  SSB_USB  0
@@ -285,8 +284,6 @@ void setup(void) {
   pinMode(tft_led, OUTPUT);     // TFT back LED pin mode
   digitalWrite(tft_led, HIGH);  // TFT back LED - on
 */
-   
-  
 
 #ifdef DEBUG
  while (!Serial) ; // wait for connection
@@ -345,13 +342,13 @@ void setup(void) {
 
 
 // initialize the TFT and show signon message etc
-  SPI.begin();
   SPI.setMOSI(TFT_MOSI); // set up HW SPI for use with the audio card - alternate pins
   SPI.setSCK(TFT_CLK);  
   setup_display();
   intro_display();
-  main_display();
   delay(4000);
+  main_display();
+  //delay(4000);
   //tft.fillScreen(BLACK);
   //tft.setCursor(0, 115);
   //tft.drawFastVLine(80, 0,60,RED);

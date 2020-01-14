@@ -30,7 +30,7 @@ extern AudioAnalyzePeak Smeter;
 
 void setup_display(void) {
   
-  // initialize the LCD display
+// initialize the LCD display
 //  tft.init();
   tft.begin();
   tft.setRotation(3);
@@ -41,7 +41,7 @@ void setup_display(void) {
   tft.setTextColor(WHITE);
   tft.setTextWrap(true); 
   // Show mid screen tune position
-  tft.drawFastVLine(80, 0,60,RED);
+  // tft.drawFastVLine(80, 0,60,RED);
 }
 
 void intro_display(void) {
@@ -232,7 +232,7 @@ void show_band(String bandname) {  // show band
 // show frequency
 void show_frequency(long int freq) { 
     char string[80];   // print format stuff
-    sprintf(string,"%d.%03d.%03d",freq/1000000,(freq-freq/1000000*1000000)/1000, freq%1000 );
+    sprintf(string,"%ld.%03ld.%03ld",freq/1000000,(freq-freq/1000000*1000000)/1000, freq%1000);
     tft.fillRect(100,115,100,120,BLACK);
     tft.setCursor(100, 115);
     tft.setTextColor(WHITE);
