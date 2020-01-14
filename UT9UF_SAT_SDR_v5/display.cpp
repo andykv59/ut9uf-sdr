@@ -2,11 +2,11 @@
 
 #include "display.h"
 #include <Audio.h>
-#include <Adafruit_GFX.h>        // LCD Core graphics library
+#include <Adafruit_GFX.h>         // LCD Core graphics library
 //#include <Adafruit_ST7735.h>    // Hardware-specific library ST7735
-#include <Adafruit_ILI9341.h>
-#include <Fonts/FreeSans9pt7b.h>
-#include <Fonts/FreeSans12pt7b.h>
+#include <Adafruit_ILI9341.h>     // Hardware-specific library ILI9341
+//#include <Fonts/FreeSans9pt7b.h>
+//#include <Fonts/FreeSans12pt7b.h>
 
 #define pos_x_smeter 5
 #define pos_y_smeter 80
@@ -208,7 +208,7 @@ void show_s_meter_layout() {
 
 // show signal strength
 void show_signalstrength(String s) {
-  tft.setFont(&FreeSans9pt7b);
+  //tft.setFont(&FreeSans9pt7b);
   tft.fillRect(12, 72, 40, 14, BLACK);
   tft.setCursor(0, 85);
   tft.print(s);

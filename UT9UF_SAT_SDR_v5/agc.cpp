@@ -5,11 +5,10 @@
 #include <Audio.h>
 
 #include <Adafruit_GFX.h>        // LCD Core graphics library
-//#include <Adafruit_QDTech.h>     // 1.8" TFT Module using Samsung S6D02A1 chip
-#include <Adafruit_ST7735.h> // Hardware-specific library TFT
+// #include <Adafruit_ST7735.h> // Hardware-specific library TFT
+#include <Adafruit_ILI9341.h>  // Hardware-specific library TFT ILI9341
 
-//extern Adafruit_QDTech tft;
-extern Adafruit_ST7735 tft;
+extern Adafruit_ILI9341 tft;
 
 extern AudioMixer4     Audioselector_I;      // Summer (add inputs)
 extern AudioMixer4     Audioselector_Q;      // Summer (add inputs)
@@ -24,8 +23,8 @@ float       sample[10];        // A ringbuffer of samples (has to be larger than
 float        AGCgain=1;         // Initial AGC gain. 1 = unity gain, 32768.0 max, 0.00004 min
 #define       AGCMAX  2
 float AGCnomVal = 0.5; // Nominal Output (32768 max)
-const int32_t AGCattack = 2;     // AGC Hang time (milliseconds) before reducing gain
-const int32_t AGChang   = 30;   // AGC Hang time before increasing gain
+const int32_t AGCattack = 2;      // AGC Hang time (milliseconds) before reducing gain
+const int32_t AGChang   = 30;     // AGC Hang time before increasing gain
 const double  AGCslope  = 1.05;   // Relative gain change
 
 
@@ -105,18 +104,18 @@ void agc(void)
       }
       else dbuv = 0;
       // Print S units
-      tft.fillRect(10, 85, 30, 7,ST7735_BLACK);
+      tft.fillRect(10, 85, 30, 7,ILI9341_BLACK);
       tft.setCursor(0, 85);
       if (dbuv == 0) sprintf(string,"S:%1.0f",s);
-      else sprintf(string,"S:9+%02.0f",dbuv);
+      else sprintf(string,"S:9+%02.0f", dbuv);
       tft.print(string);
  
       if(1)  // Debug stuff
       {
         // Print AGC loop parameters
-        tft.fillRect(0, 105, 159, 7,ST7735_BLACK);
+        tft.fillRect(0, 105, 159, 7,ILI9341_BLACK);
         tft.setCursor(0, 105);
-        sprintf(string,"pk:%f g:%f",Smeter.read(), AGCgain);
+        sprintf(string,"pk:%f g:%f", Smeter.read(), AGCgain);
         tft.print(string);
       }
     }
