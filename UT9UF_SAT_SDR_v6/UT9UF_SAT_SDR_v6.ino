@@ -95,6 +95,9 @@ int evendivisor = 100;
 int oldevendivisor = 0;
 #endif
 
+float LPFcoeff = 0.3;               // used for low pass filtering the spectrum display
+
+
 // in receive mode we use an audio IF to avoid the noise, offset and hum below ~ 1khz
 #define IF_FREQ 11000       // IF Oscillator frequency
 #define CW_FREQ 700         // audio tone frequency used for CW
@@ -105,7 +108,7 @@ extern void setup_display(void);
 //extern void init_display(void);
 extern void show_spectrum(float line_gain, float LPFcoeff, int mode);   // spectrum display draw
 extern void show_waterfall(void);                             // waterfall display
-//extern void show_radiomode(String mode);                      // show filter bandwidth
+//extern void show_radiomode(String mode);                      // show filter bandwidth now it's part of show_bandwidth()
 extern void show_band(String bandname);                       // show band
 extern void show_frequency(long int freq);                    // show frequency
 extern void show_tunestep (String S);                         // show tune step
@@ -138,13 +141,13 @@ extern void show_frequency(long freq);   // show frequency
 
 // band selection stuff
 struct band {
-  long freq;
-  String name;
+  long freq; // frequency in Hz
+  String name; // name of band
+  int mode;    // mode name
+  int bandwidthU; // upper bandwidth
+  int bandwidthL; // lower bandwidth
+  int RFgain;
 };
-
-#define SOFTROCK_40M
-
-#ifdef SOFTROCK_40M
 
 #define BAND_80M  0   // these can be in any order but indexes need to be sequential for band switching code
 #define BAND_60M  1
@@ -162,22 +165,33 @@ struct band {
 #define LAST_BAND  BAND_10M
 #define NUM_BANDS  LAST_BAND - FIRST_BAND + 1
 
+// radio operation mode defines used for filter selections etc
+#define modeAM        0
+#define modeUSB       1
+#define modeLSB       2
+#define modeDSB       3
+#define modeStereoAM  4
+#define modeSAM       5   // not in use at the moment
+#define firstmode modeAM
+#define lastmode modeStereoAM
+#define startmode modeAM
+
 struct band bands[NUM_BANDS] = {
-  3580000,"80M",
-  5000000,"60M",
-  6000000,"49M",
-  7000000,"40M",
-  9500000,"31M",
-  10100000,"30M",
-  14000000,"20M",
-  18068000,"17M",
-  21000000,"15M",
-  24890000,"12M",
-  28000000,"10M"   
+  3580000,"80M", modeLSB, 0000, 2400, 10,
+  5000000,"60M", modeLSB, 0000, 2400, 10,
+  6000000,"49M", modeLSB, 0000, 2400, 10,
+  7000000,"40M", modeLSB, 0000, 2400, 10,
+  9500000,"31M", modeUSB, 2400, 0000, 10,
+  10100000,"30M", modeUSB, 2400, 0000, 10,
+  14000000,"20M", modeUSB, 2400, 0000, 10,
+  18068000,"17M", modeUSB, 2400, 0000, 10,
+  21000000,"15M", modeUSB, 2400, 0000, 10,
+  24890000,"12M", modeUSB, 2400, 0000, 10,
+  28000000,"10M", modeUSB, 2400, 0000, 10, 
 };
 
 #define STARTUP_BAND BAND_40M    // 
-#endif
+int band = STARTUP_BAND;
 
 #define  SSB_USB  0
 #define  SSB_LSB  1
@@ -287,7 +301,7 @@ Metro ms_100 = Metro(100);  // Set up a 100ms Metro
 Metro ms_50 = Metro(50);  // Set up a 50ms Metro for polling switches
 Metro lcd_upd = Metro(10);  // Set up a Metro for LCD updates
 Metro CW_sample = Metro(10);  // Set up a Metro for LCD updates
-Metro Smetertimer = Metro(50); // Smeter timer
+//Metro Smetertimer = Metro(50); // Smeter timer
 
 #ifdef CW_WATERFALL
 Metro waterfall_upd = Metro(25);  // Set up a Metro for waterfall updates
@@ -393,7 +407,7 @@ void setup(void) {
   tft.setCursor(pos_x_frequency-6, pos_y_frequency);
   tft.setTextSize(2);
   tft.setTextColor(WHITE);
-  tft.print("UT9UF AMSAT-SDR based on Teensy-SDR tnx VE3MKC, DD4WH, PA0RWE"); 
+//  tft.print("UT9UF AMSAT-SDR based on Teensy-SDR tnx VE3MKC, DD4WH, PA0RWE"); 
   tft.setCursor(pos_x_time,pos_y_time);
   tft.setTextSize(1);
   tft.setTextColor(WHITE);
@@ -424,7 +438,8 @@ void setup(void) {
   Serial.println("si5351 and start frequency initialization ... done");
 #endif 
 
-  setup_RX(SSB_USB);  // set up the audio chain for USB reception
+//  setup_RX(SSB_USB);  // set up the audio chain for USB reception
+  setup_RX(bands[band].mode, bands[band].bandwidthU, bands[band].bandwidthL);
 
 #ifdef DEBUG
   Serial.println("setup_RX_USB audio chain skipped");
@@ -437,8 +452,10 @@ void setup(void) {
 }
 
 void loop() {
-  static uint8_t mode=SSB_USB, modesw_state=0;
-  static uint8_t band=STARTUP_BAND, Bandsw_state=0;
+//  static uint8_t mode=SSB_USB, modesw_state=0;
+  static uint8_t modesw_state=0;
+//  static uint8_t band=STARTUP_BAND, Bandsw_state=0;
+  static uint8_t Bandsw_state=0;
   static long encoder_pos=0, last_encoder_pos=999;
   long encoder_change;
 
@@ -496,8 +513,14 @@ void loop() {
  
     if (!digitalRead(ModeSW)) {
        if (modesw_state==0) { // switch was pressed - falling edge
-         if(++mode > CWR) mode=SSB_USB; // cycle thru radio modes 
-         setup_RX(mode);  // set up the audio chain for new mode
+         if(++bands[band].mode > lastmode) bands[band].mode=firstmode;               // cycle thru radio modes 
+//         if (bands[band].mode == modeUSB && notchF <=-400) notchF = notchF *-1;      // this flips the notch filter round, when you go from LSB --> USB and vice versa
+//         if (bands[band].mode == modeLSB && notchF >=400) notchF = notchF *-1;
+       
+//         if(++mode > CWR) mode=SSB_USB; // cycle thru radio modes 
+//         setup_RX(mode);  // set up the audio chain for new mode
+           setup_RX(bands[band].mode, bands[band].bandwidthU, bands[band].bandwidthL);
+           show_bandwidth(bands[band].mode, bands[band].bandwidthU, bands[band].bandwidthL);
 
 #ifdef DEBUG
   Serial.println("setup_RX mode done");
@@ -512,6 +535,8 @@ void loop() {
        if (Bandsw_state==0) { // switch was pressed - falling edge
          if(++band > LAST_BAND) band=FIRST_BAND; // cycle thru radio bands 
          show_band(bands[band].name); // show new band
+//         setup_mode(bands[band].mode); 
+         setup_RX(bands[band].mode, bands[band].bandwidthU, bands[band].bandwidthL);
 
 #ifdef SI5351_PHASED
     vfomhz = bands[band].freq/10000;
@@ -549,8 +574,8 @@ void loop() {
   // Draw Spectrum Display
   //
   //  if ((lcd_upd.check() == 1) && myFFT.available()) show_spectrum();
-  if ((lcd_upd.check() == 1)) show_spectrum();
-  if ((Smetertimer.check() == 1)) show_Smeter();
+  if ((lcd_upd.check() == 1)) show_spectrum(bands[band].RFgain/10, LPFcoeff, bands[band].mode);
+  //if ((Smetertimer.check() == 1)) show_Smeter();
 
   if ((CW_sample.check() == 1)) {
     digitalWrite(DEBUG_PIN,1); // for timing measurements
@@ -599,7 +624,8 @@ void Audiochannelsetup(int route)
   }
 }
 
-void setup_RX(int mode)
+//void setup_RX(int mode)
+void setup_RX(int MO, int bwu, int bwl)
 {
   AudioNoInterrupts();   // Disable Audio while reconfiguring filters
 
@@ -617,30 +643,35 @@ void setup_RX(int mode)
   Hilbert45_I.begin(RX_hilbertm45,HILBERT_COEFFS);
   Hilbert45_Q.begin(RX_hilbert45,HILBERT_COEFFS);
 
-  if ((mode == SSB_LSB) || (mode == CWR))             // LSB modes
+  if ((MO == SSB_LSB) || (MO == CWR))             // LSB modes
     FIR_BPF.begin(firbpf_lsb,BPF_COEFFS);       // 2.4kHz LSB filter
   else FIR_BPF.begin(firbpf_usb,BPF_COEFFS);       // 2.4kHz USB filter
 
-  switch (mode) {
-    case CWR:
+  switch (MO) {
+    case modeDSB:  // to change - in reality this is CWR
       postFIR.begin(postfir_700,COEFF_700);     // 700 Hz LSB filter
-      show_bandwidth(LSB_NARROW);
-      show_radiomode("CWR");
+//      show_bandwidth(LSB_NARROW);
+        show_bandwidth(bands[band].mode, bands[band].bandwidthU, bands[band].bandwidthL);
+        show_bandwidth(bands[band].mode, bands[band].bandwidthU, bands[band].bandwidthL);
+//      show_radiomode("CWR");
     break;
-    case SSB_LSB:
+    case modeLSB:
       postFIR.begin(postfir_lpf,COEFF_LPF);     // 2.4kHz LSB filter
-      show_bandwidth(LSB_WIDE);
-      show_radiomode("LSB");
+//      show_bandwidth(LSB_WIDE);
+        show_bandwidth(bands[band].mode, bands[band].bandwidthU, bands[band].bandwidthL);
+//      show_radiomode("LSB");
     break;
-    case CW:
-      postFIR.begin(postfir_700,COEFF_700);     // 700 Hz LSB filter
-      show_bandwidth(USB_NARROW);
-      show_radiomode("CW");
+    case modeAM:   // to change - in reality this is CW
+      postFIR.begin(postfir_700,COEFF_700);     // 700 Hz CW filter
+//      show_bandwidth(USB_NARROW);
+        show_bandwidth(bands[band].mode, bands[band].bandwidthU, bands[band].bandwidthL);
+//      show_radiomode("CW");
     break;
-    case SSB_USB:
-      postFIR.begin(postfir_lpf,COEFF_LPF);     // 2.4kHz LSB filter
-      show_bandwidth(USB_WIDE);
-      show_radiomode("USB");
+    case modeUSB:
+      postFIR.begin(postfir_lpf,COEFF_LPF);     // 2.4kHz USB filter
+//      show_bandwidth(USB_WIDE);
+        show_bandwidth(bands[band].mode, bands[band].bandwidthU, bands[band].bandwidthL);
+//      show_radiomode("USB");
     break;
   }
   AudioInterrupts(); 
