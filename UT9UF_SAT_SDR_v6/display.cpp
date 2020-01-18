@@ -23,8 +23,8 @@ float uv, uvold, dbuv, dbm, s;// microvolts, db-microvolts, s-units, volts, dbm,
 float dbmold = 0;
 char string[80];  
 int le, bwhelp, left, lsb; 
-int pixelold[320] = {0};
-int pixelnew[320];
+int pixelold[160] = {0};
+int pixelnew[160];
 int Ubn, Lbn;
 uint8_t sch = 0;
 bool freq_flag = 0;
@@ -148,8 +148,8 @@ void main_display(void) {
 
 void show_spectrum(float line_gain, float LPFcoeff, int M) {
   static int startx=0, endx;
-  endx = startx + 32;     // was 16 and now 32
-  int scale=3;
+  endx = startx + 16;     // was 16 and now 32
+  int scale=4;
   float avg = 0.0;
   
 // Draw pixels of spectrum display  mFFT.output index < 256
@@ -238,8 +238,8 @@ void show_spectrum(float line_gain, float LPFcoeff, int M) {
     uvold = uv;
   } // end if (Smeter Timer)   
   
-  startx+=32;
-  if (startx >=160) startx=0;  // old value 160 new 320 based on display wide
+  startx+=16;
+  if (startx >=159) startx=0;  // old value 160 new 320 based on display wide
 }  // end of Spectrum display
 
 
