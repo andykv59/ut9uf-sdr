@@ -144,17 +144,18 @@ void main_display(void) {
 // draw the spectrum display and S-meter
 // this version draws 1/10 of the spectrum per call (32 pixels) but we run it 10x the speed
 // this allows other stuff to run without blocking for so long
+// M here is Mode (USB/LSB etc)
 
 void show_spectrum(float line_gain, float LPFcoeff, int M) {
   static int startx=0, endx;
-  endx = startx + 32;     // was 16
+  endx = startx + 32;     // was 16 and now 32
   int scale=3;
   float avg = 0.0;
   
 // Draw pixels of spectrum display  mFFT.output index < 256
 //
   for (int16_t x=startx; x < endx; x+=1) {
-    if ((x > 1) && (x < 318))                 // was 159
+    if ((x > 1) && (x < 159))                 // was 159 now 318
 // moving window - weighted average of 5 points of the spectrum to smooth spectrum in the frequency domain
 // weights:  x: 50% , x-1/x+1: 36%, x+2/x-2: 14% 
       avg = myFFT.output[(x)*32/40]*0.5 + myFFT.output[(x-1)*32/40]*0.18 + myFFT.output[(x-2)*32/40]*0.07 + myFFT.output[(x+1)*32/40]*0.18 + myFFT.output[(x+2)*32/40]*0.07;
@@ -170,7 +171,9 @@ void show_spectrum(float line_gain, float LPFcoeff, int M) {
     if(x != pos_centre_f) {
       if (pixelold[x] != pixelnew[x]) { 
         tft.drawPixel(x, pos_spectrum-1-pixelold[x], BLACK);    // delete old pixel
+        //tft.drawPixel(x+1, pos_spectrum-1-pixelold[x], BLACK);    // delete old pixel
         tft.drawPixel(x, pos_spectrum-1-pixelnew[x], WHITE);    // write new pixel
+        //tft.drawPixel(x+1, pos_spectrum-1-pixelnew[x], WHITE);    // write new pixel
         pixelold[x] = pixelnew[x];
       }
     }
@@ -236,7 +239,7 @@ void show_spectrum(float line_gain, float LPFcoeff, int M) {
   } // end if (Smeter Timer)   
   
   startx+=32;
-  if (startx >=320) startx=0;
+  if (startx >=160) startx=0;  // old value 160 new 320 based on display wide
 }  // end of Spectrum display
 
 
@@ -273,7 +276,7 @@ void show_waterfall(void) {
   //  FFT bins are 22khz/128=171hz wide 
   // cw peak should be around 11.6khz - 
   static uint16_t waterfall[80];  // array for simple waterfall display
-  static uint8_t w_index=0,w_avg;
+  static uint8_t w_index=0;
   waterfall[w_index]=0;
   for (uint8_t y=66;y<67;++y)  // sum of bin powers near cursor - usb only
       waterfall[w_index]+=(uint8_t)(abs(myFFT.output[y])); // store bin power readings in circular buffer
@@ -481,7 +484,7 @@ void show_s_meter_layout() {
 
 // show tunestep
 void show_tunestep(String S) {
-  char string[80]; 
+  //char string[80]; 
   tft.fillRect(pos_x_menu, pos_y_menu, 70, 10, BLACK);   // erase old string
   tft.setTextColor(YELLOW);                              // changed to yellow, was white
   tft.setCursor(pos_x_menu, pos_y_menu);
@@ -503,20 +506,11 @@ void show_signalstrength(String s) {
 
 // show band
 void show_band(String bandname) {
-//  tft.fillRect(100, 85, 19, 7, BLACK);        // erase old string
-//  tft.setTextColor(WHITE);
-//  tft.setCursor(100, 85);
-//  tft.print(bandname);
-}
-
-/*
-void show_band(String bandname) {  // show band
-  tft.fillRect(100, 97, 19, 7, BLACK); // erase old string
+  tft.fillRect(110, 185, 19, 7, BLACK);        // erase old string
   tft.setTextColor(WHITE);
-  tft.setCursor(100, 97);
+  tft.setCursor(110, 185);
   tft.print(bandname);
 }
-*/
 
 // Show NOTCH
 void show_notch(int notchF, int MODE) {
@@ -617,17 +611,6 @@ void show_notch(int notchF, int MODE) {
   pos_centre_f -= 1;
 } // end void show_notch
 
-
-// show radio mode
-/*
-void show_radiomode(String mode) { 
-  tft.fillRect(125, 97, 30, 7, BLACK); // erase old string
-  tft.setTextColor(WHITE);
-  tft.setCursor(125, 97);
-  tft.print(mode);
-}  
-*/
-
 // Extract DIGIT (FREQ)
 int ExtractDigit(long int n, int k) {
   switch (k) {
@@ -644,7 +627,6 @@ int ExtractDigit(long int n, int k) {
 }
 
 //Show FREQUENCY
-// show frequency
 void show_frequency(long int freq) { 
 
   tft.setTextSize(3);
@@ -712,19 +694,6 @@ void show_frequency(long int freq) {
   tft.setTextSize(1);
   tft.setTextColor(WHITE);  
 }    
-
-
-// show frequency
-/*void show_frequency(long int freq) { 
-    char string[80];   // print format stuff
-    sprintf(string,"%ld.%03ld.%03ld",freq/1000000,(freq-freq/1000000*1000000)/1000, freq%1000);
-    tft.fillRect(100,115,100,120,BLACK);
-    tft.setCursor(100, 115);
-    tft.setTextColor(WHITE);
-    tft.print(string); 
-}
-*/
-
 
 // show S-meter
 /*

@@ -4,7 +4,7 @@
 //
 // TFT definition - this Teensy3 native optimized version requires specific pins
 //
-#define ver "v.00.06.00"
+#define ver "v.00.06.00 github.com/andykv59/ut9uf-sdr"
 
 #include <asserts.h>
 #include <errors.h>
@@ -75,8 +75,12 @@ Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_MOSI, TFT_CLK, TFT_R
 // UI switch definitions
 // encoder switch
 Encoder tune(16, 17);
-#define TUNE_STEP       1     // slow tuning rate 1hz steps
+#define TUNE_STEP1       1     // slow tuning rate 1hz steps
+#define TUNE_STEP2       25     // slow tuning rate 25hz steps
+#define TUNE_STEP3       250     // fast tuning rate steps
 #define FAST_TUNE_STEP   250  // fast tuning rate 250hz steps
+int tunestep = TUNE_STEP1;
+String tune_text="1 Hz Tune";  
 
 // Switches between pin and ground for USB/LSB/CW modes
 const int8_t ModeSW =21;    // USB/LSB
@@ -177,17 +181,17 @@ struct band {
 #define startmode modeAM
 
 struct band bands[NUM_BANDS] = {
-  3580000,"80M", modeLSB, 0000, 2400, 10,
-  5000000,"60M", modeLSB, 0000, 2400, 10,
-  6000000,"49M", modeLSB, 0000, 2400, 10,
-  7000000,"40M", modeLSB, 0000, 2400, 10,
-  9500000,"31M", modeUSB, 2400, 0000, 10,
-  10100000,"30M", modeUSB, 2400, 0000, 10,
-  14000000,"20M", modeUSB, 2400, 0000, 10,
-  18068000,"17M", modeUSB, 2400, 0000, 10,
-  21000000,"15M", modeUSB, 2400, 0000, 10,
-  24890000,"12M", modeUSB, 2400, 0000, 10,
-  28000000,"10M", modeUSB, 2400, 0000, 10, 
+  3580000,"80M", modeLSB, 0000, 2400, 0,
+  5000000,"60M", modeLSB, 0000, 2400, 0,
+  6000000,"49M", modeLSB, 0000, 2400, 0,
+  7000000,"40M", modeLSB, 0000, 2400, 0,
+  9500000,"31M", modeUSB, 2400, 0000, 0,
+  10100000,"30M", modeUSB, 2400, 0000, 0,
+  14000000,"20M", modeUSB, 2400, 0000, 0,
+  18068000,"17M", modeUSB, 2400, 0000, 0,
+  21000000,"15M", modeUSB, 2400, 0000, 0,
+  24890000,"12M", modeUSB, 2400, 0000, 0,
+  28000000,"10M", modeUSB, 2400, 0000, 0, 
 };
 
 #define STARTUP_BAND BAND_40M    // 
@@ -395,8 +399,6 @@ void setup(void) {
   Serial.println("setup-display ... done");
 #endif  
 
-  // set up initial band and frequency
-  show_band(bands[STARTUP_BAND].name);
 
 #ifdef DEBUG
   Serial.println("show initial band ... done");
@@ -407,15 +409,19 @@ void setup(void) {
   tft.setCursor(pos_x_frequency-6, pos_y_frequency);
   tft.setTextSize(2);
   tft.setTextColor(WHITE);
-//  tft.print("UT9UF AMSAT-SDR based on Teensy-SDR tnx VE3MKC, DD4WH, PA0RWE"); 
+  tft.print("UT9UF AMSAT-SDR"); 
   tft.setCursor(pos_x_time,pos_y_time);
   tft.setTextSize(1);
   tft.setTextColor(WHITE);
   tft.print(ver);             // Display Version
-  delay (2000);
+  delay (4000);
   tft.fillRect(pos_x_frequency-24, pos_y_frequency, 220, 16, BLACK);    // Clear startup text
-  tft.fillRect(pos_x_time, pos_y_time, 80, 8, BLACK);                   // erase for time display
+  tft.fillRect(pos_x_time, pos_y_time, 240, 8, BLACK);                   // erase for time display
+
   
+  // set up initial band and frequency
+  show_band(bands[STARTUP_BAND].name);
+  show_tunestep(tune_text);
 
 // set up clk gen
   si5351.set_correction(0, SI5351_PLL_INPUT_XO);  // There is a calibration sketch in File/Examples/si5351Arduino-Jason where you can determine the correction by using the serial monitor
@@ -467,7 +473,7 @@ void loop() {
     last_encoder_pos=encoder_pos; 
     
     // press encoder button for fast tuning
-    if (digitalRead(TuneSW)) bands[band].freq+=encoder_change*TUNE_STEP;  // tune the master vfo - normal steps
+    if (digitalRead(TuneSW)) bands[band].freq+=encoder_change*tunestep;  // tune the master vfo - normal steps
     else bands[band].freq +=encoder_change*FAST_TUNE_STEP;  // fast tuning steps
     
 
