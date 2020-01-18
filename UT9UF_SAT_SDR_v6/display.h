@@ -54,5 +54,6 @@
 
 #define s_w             10
 #define spectrum_span   44.117
-#define posbin          159   // Bin for Rx above IF
+//#define posbin          159   // Bin for Rx above IF
+#define posbin          80   // Bin for Rx above IF
 #define binBW           172   // Hz / bin  (44117 / 256)

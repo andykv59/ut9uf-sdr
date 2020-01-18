@@ -11,7 +11,8 @@
 //#define pos_y_smeter 80
 //#define s_w 10
 
-int pos_centre_f = 200; // Rx above IF, IF = 5515 190
+//int pos_centre_f = 200; // Rx above IF, IF = 5515 190
+int pos_centre_f = 80; // Rx above IF, IF = 5515 190
 
 //-------------------------||------- IQ lib not yet defined 
 //extern AudioAnalyzeFFT256IQ  myFFT;
@@ -191,9 +192,9 @@ void show_spectrum(float line_gain, float LPFcoeff, int M) {
   
   if (Smetertimer.check()==1) {
     uv = myFFT.output[posbin]+myFFT.output[posbin+1]+myFFT.output[posbin+2]+myFFT.output[posbin+3]+myFFT.output[posbin-1]+myFFT.output[posbin-2]+myFFT.output[posbin-3];
-    if (M == 1)  // USB
+    if (M == 0)  // USB
       uv = myFFT.output[Ubn]+myFFT.output[Ubn+1]+myFFT.output[Ubn+2]+myFFT.output[Ubn+3]+myFFT.output[Ubn-1]+myFFT.output[Ubn-2]+myFFT.output[Ubn-3];
-    else if (M == 2)  // LSB
+    else if (M == 1)  // LSB
       uv = myFFT.output[Lbn]+myFFT.output[Lbn+1]+myFFT.output[Lbn+2]+myFFT.output[Lbn+3]+myFFT.output[Lbn-1]+myFFT.output[Lbn-2]+myFFT.output[Lbn-3];
     
 // low pass filtering for Smeter values 
@@ -304,20 +305,20 @@ void show_bandwidth (int M, long int FU, long int FL) {
     tft.setCursor(pos_x_mode, pos_y_mode);  
   
     switch (M) {
-    case 0: //AM
-      tft.print("AM"); 
+    case 0: //USB
+      tft.print("USB"); 
       break;
-    case 3: //DSB
-      tft.print("DSB"); 
+    case 3: //CWR
+      tft.print("CWR"); 
       break;
     case 4: //StereoAM
       tft.print("SAM"); 
       break;
-    case 2: //LSB
-      tft.print("LSB"); 
+    case 2: //CW
+      tft.print("CW"); 
       break;
-    case 1:  //USB
-      tft.print("USB"); 
+    case 1:  //LSB
+      tft.print("LSB"); 
       break;
     } // end switch
   oldM = M;
@@ -404,7 +405,7 @@ void show_bandwidth (int M, long int FU, long int FL) {
 
 // draw 9 yellow points each 36 pixels = 5 KHz
 // spectrum_span = 44.117
-    for (int16_t x=20; x < 320; x+=36) {
+    for (int16_t x=0; x < 160; x+=10) {
       if (x != pos_centre_f) tft.fillRect(x, pos_spectrum, 2, 3, YELLOW);
     }
 

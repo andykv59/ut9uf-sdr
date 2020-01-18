@@ -54,12 +54,6 @@ Si5351 si5351;              //Take an instance of Si5351
 #define MASTER_CLK_MULT  1  //ut9uf-sdr requires 1x clock no sn74hc74 chip in use
 
 
-// TFT related
-//#if defined(__SAM3X8E__)
-//    #undef __FlashStringHelper::F(string_literal)
-//    #define F(string_literal) string_literal
-//#endif
-
 // Option 1: use any pins but a little slower
 //Adafruit_ST7735 tft = Adafruit_ST7735(cd, dc, mosi, sclk, rst);
 
@@ -170,15 +164,16 @@ struct band {
 #define NUM_BANDS  LAST_BAND - FIRST_BAND + 1
 
 // radio operation mode defines used for filter selections etc
-#define modeAM        0
-#define modeUSB       1
-#define modeLSB       2
-#define modeDSB       3
+
+#define modeUSB       0
+#define modeLSB       1
+#define modeCW       2 // = CW
+#define modeCWR        3 // = CWR
 #define modeStereoAM  4
 #define modeSAM       5   // not in use at the moment
-#define firstmode modeAM
-#define lastmode modeStereoAM
-#define startmode modeAM
+#define firstmode modeUSB
+#define lastmode modeCWR
+#define startmode modeLSB
 
 struct band bands[NUM_BANDS] = {
   3580000,"80M", modeLSB, 0000, 2400, 0,
@@ -654,7 +649,7 @@ void setup_RX(int MO, int bwu, int bwl)
   else FIR_BPF.begin(firbpf_usb,BPF_COEFFS);       // 2.4kHz USB filter
 
   switch (MO) {
-    case modeDSB:  // to change - in reality this is CWR
+    case modeCW:  // to change - in reality this is CW
       postFIR.begin(postfir_700,COEFF_700);     // 700 Hz LSB filter
 //      show_bandwidth(LSB_NARROW);
         show_bandwidth(bands[band].mode, bands[band].bandwidthU, bands[band].bandwidthL);
@@ -667,7 +662,7 @@ void setup_RX(int MO, int bwu, int bwl)
         show_bandwidth(bands[band].mode, bands[band].bandwidthU, bands[band].bandwidthL);
 //      show_radiomode("LSB");
     break;
-    case modeAM:   // to change - in reality this is CW
+    case modeCWR:   // to change - in reality this is CW
       postFIR.begin(postfir_700,COEFF_700);     // 700 Hz CW filter
 //      show_bandwidth(USB_NARROW);
         show_bandwidth(bands[band].mode, bands[band].bandwidthU, bands[band].bandwidthL);
@@ -706,7 +701,7 @@ void setup_TX(int mode)
       Audiochannelsetup(ROUTE_CW_TX);   // switch audio outs to CW I & Q 
       audioShield.volume(CW_SIDETONE_VOLUME);   // fixed level for TX  
     break;
-    case SSB_USB:
+    case modeUSB:
       // Initialize the +/-45 degree Hilbert filters
       Hilbert45_I.begin(TX_hilbert45,HILBERT_COEFFS);
       Hilbert45_Q.begin(TX_hilbertm45,HILBERT_COEFFS);
@@ -715,7 +710,7 @@ void setup_TX(int mode)
       audioShield.micGain(MIC_GAIN);  // have to adjust mic gain after selecting mic in
       audioShield.volume(SSB_SIDETONE_VOLUME);   // fixed level for TX  
     break;
-    case SSB_LSB:
+    case modeLSB:
   // Initialize the +/-45 degree Hilbert filters
       Hilbert45_I.begin(TX_hilbertm45,HILBERT_COEFFS); // swap filters for LSB mode
       Hilbert45_Q.begin(TX_hilbert45,HILBERT_COEFFS);
