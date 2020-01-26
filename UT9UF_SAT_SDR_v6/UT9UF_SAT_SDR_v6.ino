@@ -79,9 +79,9 @@ String tune_text="1 Hz Tune";
 // Switches between pin and ground for USB/LSB/CW modes
 const int8_t ModeSW =21;    // USB/LSB
 const int8_t BandSW =20;    // band selector
-const int8_t TuneSW =6;     // low for fast tune - encoder pushbutton
+const int8_t TuneSW =6;     // low for fast tune - encoder MULTI pushbutton
 
-#define  DEBUG  // if this mode is enabled - you MUST open port monitor in order to start radio
+//#define  DEBUG  // if this mode is enabled - you MUST open port monitor in order to start radio
 
 // Setup the phased mode of si5351 - CLK0 and CLK2 are in use and phase 90 degrees shift is done by si5351
 // taken from http://py2ohh.w2c.com.br/
@@ -136,6 +136,26 @@ extern void show_frequency(long freq);   // show frequency
 //#define CW_WATERFALL // define for experimental CW waterfall - needs faster update rate
 #define AUDIO_STATS    // shows audio library CPU utilization etc on serial console
 #define DEBUG_PIN   4
+
+#define BTN_PIN   21   // define analog input pin where all front panel buttons connected through resistors ladder (510 Ohm)
+/* Hardware buttons are
+ *  1 MODE_LFT CW LSB USB etc
+ *  2 MODE_RGT USB LSB CW rtc
+ *  3 ANT_SW   Antenna connector switch 1,2,3,4
+ *  4 P.AMP/ATT Preapmlifier vs attenuator
+ *  5 TX       Transmit 
+ *  6 FILTER   Filter switch
+ *  7 MENU     Enter setup menu
+ *  8 A/B      VFO-A / VFO-B switch
+ *  9 SAT      Satellite mode
+ *  10 DOWN    Band down
+ *  11 UP      Band up
+ *  12 SPLIT   Split mode
+ *  13 V/M     VFO vs Memory mode switch
+ *  14 FAST/LOCK  Fast tune / push and keep to lock TUNE
+ *  15 RIT     RIT mode
+ *  16 MULTI   MULTI encoder button
+ */
 
 // band selection stuff
 struct band {
