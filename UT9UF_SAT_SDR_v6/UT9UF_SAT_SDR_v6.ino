@@ -81,7 +81,7 @@ const int8_t ModeSW =21;    // USB/LSB
 const int8_t BandSW =20;    // band selector
 const int8_t TuneSW =6;     // low for fast tune - encoder MULTI pushbutton
 
-#define  DEBUG  // if this mode is enabled - you MUST open port monitor in order to start radio
+//#define  DEBUG  // if this mode is enabled - you MUST open port monitor in order to start radio
 
 // Setup the phased mode of si5351 - CLK0 and CLK2 are in use and phase 90 degrees shift is done by si5351
 // taken from http://py2ohh.w2c.com.br/
@@ -478,9 +478,12 @@ void setup(void) {
 
 void loop() {
 //  static uint8_t mode=SSB_USB, modesw_state=0;
-  static uint8_t modesw_state=0;
+  static uint8_t ModeswRGT_state=0;
+  static uint8_t ModeswLFT_state=0;
+  
 //  static uint8_t band=STARTUP_BAND, Bandsw_state=0;
-  static uint8_t Bandsw_state=0;
+  static uint8_t BandswUP_state=0;
+  static uint8_t BandswDOWN_state=0;
   static long encoder_pos=0, last_encoder_pos=999;
   long encoder_change;
 
@@ -574,6 +577,7 @@ void loop() {
       Serial.println("SAT");
     }
     else if (SW_val >= 417 && SW_val <= 427) {
+      if (BandswDOWN_state==0) { // switch was pressed 
       Serial.println("DOWN");
       if(--band < FIRST_BAND) band=LAST_BAND; // cycle thru radio bands 
       show_band(bands[band].name); // show new band
@@ -597,11 +601,16 @@ void loop() {
       si5351.set_freq((unsigned long)bands[band].freq * MASTER_CLK_MULT * 100ULL, SI5351_CLK0);
 #endif
       show_frequency(bands[band].freq + IF_FREQ);  // frequency we are listening to
-    }
+      BandswDOWN_state=1; // flag switch is pressed
+      }
+      else BandswDOWN_state=0; // flag switch not pressed
+    } // end of DOWN switch
+    
 //    else if (SW_val >= 466 && SW_val <= 476) {
 //      Serial.println("TX");
 //    }
     else if (SW_val >= 466 && SW_val <= 476) {
+      if (BandswUP_state==0) { // switch was pressed 
       Serial.println("UP");
       if(++band > LAST_BAND) band=FIRST_BAND; // cycle thru radio bands 
       show_band(bands[band].name); // show new band
@@ -625,15 +634,42 @@ void loop() {
       si5351.set_freq((unsigned long)bands[band].freq * MASTER_CLK_MULT * 100ULL, SI5351_CLK0);
 #endif
       show_frequency(bands[band].freq + IF_FREQ);  // frequency we are listening to
+      BandswUP_state=1; // flag switch is pressed
+      }
+      else BandswUP_state=0; // flag switch not pressed
     }
     else if (SW_val >= 500 && SW_val <= 510) {
       Serial.println("ANT_SW");
     }
     else if (SW_val >= 523 && SW_val <= 533) {
+      if (ModeswLFT_state==0) { // switch was pressed 
       Serial.println("MODE_LFT");
+      if(--bands[band].mode < firstmode) bands[band].mode=lastmode;               // cycle thru radio modes 
+//      if (bands[band].mode == modeUSB && notchF <=-400) notchF = notchF *-1;      // this flips the notch filter round, when you go from LSB --> USB and vice versa
+//      if (bands[band].mode == modeLSB && notchF >=400) notchF = notchF *-1;
+       
+//      if(++mode > CWR) mode=SSB_USB; // cycle thru radio modes 
+//      setup_RX(mode);  // set up the audio chain for new mode
+       setup_RX(bands[band].mode, bands[band].bandwidthU, bands[band].bandwidthL);
+       show_bandwidth(bands[band].mode, bands[band].bandwidthU, bands[band].bandwidthL);
+       ModeswLFT_state=1;
+      }
+       else ModeswLFT_state=0;         
     }
     else if (SW_val >= 547 && SW_val <= 557) {
+      if (ModeswRGT_state==0) { // switch was pressed 
       Serial.println("MODE_RGT");
+      if(++bands[band].mode > lastmode) bands[band].mode=firstmode;               // cycle thru radio modes 
+//      if (bands[band].mode == modeUSB && notchF <=-400) notchF = notchF *-1;      // this flips the notch filter round, when you go from LSB --> USB and vice versa
+//      if (bands[band].mode == modeLSB && notchF >=400) notchF = notchF *-1;
+       
+//      if(++mode > CWR) mode=SSB_USB; // cycle thru radio modes 
+//      setup_RX(mode);  // set up the audio chain for new mode
+       setup_RX(bands[band].mode, bands[band].bandwidthU, bands[band].bandwidthL);
+       show_bandwidth(bands[band].mode, bands[band].bandwidthU, bands[band].bandwidthL);
+       ModeswRGT_state=1;
+      }
+       else ModeswRGT_state=0; 
     }
     else if (SW_val >= 568 && SW_val <= 578) {
       Serial.println("P.AMP_ATT");
@@ -653,26 +689,15 @@ void loop() {
 //#ifdef DEBUG
 //  Serial.println("audioShield volume skipped");
 //#endif   
- 
+/* 
     if (!digitalRead(ModeSW)) {
        if (modesw_state==0) { // switch was pressed - falling edge
-         if(++bands[band].mode > lastmode) bands[band].mode=firstmode;               // cycle thru radio modes 
-//         if (bands[band].mode == modeUSB && notchF <=-400) notchF = notchF *-1;      // this flips the notch filter round, when you go from LSB --> USB and vice versa
-//         if (bands[band].mode == modeLSB && notchF >=400) notchF = notchF *-1;
-       
-//         if(++mode > CWR) mode=SSB_USB; // cycle thru radio modes 
-//         setup_RX(mode);  // set up the audio chain for new mode
-           setup_RX(bands[band].mode, bands[band].bandwidthU, bands[band].bandwidthL);
-           show_bandwidth(bands[band].mode, bands[band].bandwidthU, bands[band].bandwidthL);
-
-#ifdef DEBUG
-  Serial.println("setup_RX mode done");
-#endif   
-         
          modesw_state=1; // flag switch is pressed
        }
     }
     else modesw_state=0; // flag switch not pressed
+
+
   
     if (!digitalRead(BandSW)) {
        if (Bandsw_state==0) {
@@ -680,8 +705,9 @@ void loop() {
        }
     }
     else Bandsw_state=0; // flag switch not pressed  
-  }
-
+*/
+    
+  } // end of ms_50 check
 // end of 50 ms switches check
 
 #ifdef SW_AGC
