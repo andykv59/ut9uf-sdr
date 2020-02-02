@@ -81,7 +81,7 @@ const int8_t ModeSW =21;    // USB/LSB
 const int8_t BandSW =20;    // band selector
 const int8_t TuneSW =6;     // low for fast tune - encoder MULTI pushbutton
 
-//#define  DEBUG  // if this mode is enabled - you MUST open port monitor in order to start radio
+#define  DEBUG  // if this mode is enabled - you MUST open port monitor in order to start radio
 
 // Setup the phased mode of si5351 - CLK0 and CLK2 are in use and phase 90 degrees shift is done by si5351
 // taken from http://py2ohh.w2c.com.br/
@@ -137,25 +137,28 @@ extern void show_frequency(long freq);   // show frequency
 #define AUDIO_STATS    // shows audio library CPU utilization etc on serial console
 #define DEBUG_PIN   4
 
-#define BTN_PIN   21   // define analog input pin where all front panel buttons connected through resistors ladder (510 Ohm)
-/* Hardware buttons are
- *  1 MODE_LFT CW LSB USB etc
- *  2 MODE_RGT USB LSB CW rtc
- *  3 ANT_SW   Antenna connector switch 1,2,3,4
- *  4 P.AMP/ATT Preapmlifier vs attenuator
- *  5 TX       Transmit 
- *  6 FILTER   Filter switch
- *  7 MENU     Enter setup menu
- *  8 A/B      VFO-A / VFO-B switch
- *  9 SAT      Satellite mode
- *  10 DOWN    Band down
- *  11 UP      Band up
- *  12 SPLIT   Split mode
- *  13 V/M     VFO vs Memory mode switch
- *  14 FAST/LOCK  Fast tune / push and keep to lock TUNE
- *  15 RIT     RIT mode
- *  16 MULTI   MULTI encoder button
+#define BTN_PIN   21   // define analog input pin where all front panel buttons connected through resistors ladder (150 - 510 Ohm and 8k to +5V)
+/* Hardware buttons are including tested values of analog pin reads of resistors ladder
+ *  1 ModeSWrgt MODE_LFT CW LSB USB etc // values 552
+ *  2 ModeSWlft MODE_RGT USB LSB CW rtc // values 528
+ *  3 AntSW ANT_SW   Antenna connector switch 1,2,3,4 // values 505
+ *  4 PampSW P.AMP/ATT Preapmlifier vs attenuator // values 573
+ *  5 TxSW TX      Transmit   // values 471
+ *  6 FilterSW FILTER   Filter switch // values 594
+ *  7 MenuSW MENU     Enter setup menu  //values 604
+ *  8 ABSW A/B      VFO-A / VFO-B switch  // values 1
+ *  9 SatSW SAT      Satellite mode // values 365
+ *  10 BandSWdn DOWN    Band down // values 422
+ *  11 BandSWup   UP      Band up // values 471
+ *  12 SplitSW SPLIT   Split mode // values 88
+ *  13 VMSW V/M     VFO vs Memory mode switch // values 307
+ *  14 TuneSW FAST/LOCK  Fast tune / push and keep to lock TUNE   // values 170
+ *  15 RitSW RIT     RIT mode // values 242
+ *  16 MutliSW MULTI   MULTI encoder button  // values ?? not yet connected
  */
+//int SW_pin = BTN_PIN;
+int SW_val = 0;
+
 
 // band selection stuff
 struct band {
@@ -341,9 +344,10 @@ void setup(void) {
 #endif
 
   //pinMode(BACKLIGHT, INPUT_PULLUP); // yanks up display BackLight signal
-  pinMode(ModeSW, INPUT_PULLUP);    // USB/LSB switch
+  //pinMode(ModeSW, INPUT_PULLUP);    // USB/LSB switch
   pinMode(BandSW, INPUT_PULLUP);    // filter width switch
   pinMode(TuneSW, INPUT_PULLUP);    // tuning rate = high
+  pinMode(BTN_PIN, INPUT); // buttons ladder
   
 #ifdef DEBUG
   Serial.println("TFT light ON, switchess PULLUP ... done");
@@ -522,11 +526,129 @@ void loop() {
     show_frequency(bands[band].freq + IF_FREQ);  // frequency we are listening to
   }
 
-   // every 50 ms, adjust the volume and check the switches
+// every 50 ms, adjust the volume and check the switches
   if (ms_50.check() == 1) {
     float vol = analogRead(15);
     vol = vol / 1023.0;
     audioShield.volume(vol);
+
+#ifdef DEBUG
+  SW_read(); // read the state of buttons pin and print into debug screen
+#endif
+/* Hardware buttons are including tested values of analog pin reads of resistors ladder
+ *  1 ModeSWrgt MODE_LFT CW LSB USB etc // values 552
+ *  2 ModeSWlft MODE_RGT USB LSB CW rtc // values 528
+ *  3 AntSW ANT_SW   Antenna connector switch 1,2,3,4 // values 505
+ *  4 PampSW P.AMP_ATT Preapmlifier vs attenuator // values 573
+ *  5 TxSW TX      Transmit   // values 471
+ *  6 FilterSW FILTER   Filter switch // values 594
+ *  7 MenuSW MENU     Enter setup menu  //values 604
+ *  8 ABSW A/B      VFO-A / VFO-B switch  // values 1
+ *  9 SatSW SAT      Satellite mode // values 365
+ *  10 BandSWdn DOWN    Band down // values 422
+ *  11 BandSWup   UP      Band up // values 471
+ *  12 SplitSW SPLIT   Split mode // values 88
+ *  13 VMSW V/M     VFO vs Memory mode switch // values 307
+ *  14 TuneSW FAST/LOCK  Fast tune / push and keep to lock TUNE   // values 170
+ *  15 RitSW RIT     RIT mode // values 242
+ *  16 MutliSW MULTI   MULTI encoder button  // values ?? not yet connected
+ */
+    
+    SW_val = analogRead(BTN_PIN);
+    if (SW_val >= 1 && SW_val <= 5) {
+      Serial.println("A_B");
+    }
+    else if (SW_val >= 83 && SW_val <= 93) {
+      Serial.println("SPLIT");
+    }
+    else if (SW_val >= 165 && SW_val <= 175) {
+      Serial.println("FAST_LOCK");
+    }
+    else if (SW_val >= 237 && SW_val <= 247) {
+      Serial.println("RIT");
+    }
+    else if (SW_val >= 302 && SW_val <= 312) {
+      Serial.println("V_M");
+    }
+    else if (SW_val >= 360 && SW_val <= 370) {
+      Serial.println("SAT");
+    }
+    else if (SW_val >= 417 && SW_val <= 427) {
+      Serial.println("DOWN");
+      if(--band < FIRST_BAND) band=LAST_BAND; // cycle thru radio bands 
+      show_band(bands[band].name); // show new band
+      setup_RX(bands[band].mode, bands[band].bandwidthU, bands[band].bandwidthL);
+#ifdef SI5351_PHASED
+      vfomhz = bands[band].freq/10000;
+#ifdef DEBUG
+      Serial.print("VFOmhz is ");
+      Serial.println(vfomhz);
+#endif
+      alteraevendivisor();   
+      si5351.set_freq_manual((unsigned long)bands[band].freq * MASTER_CLK_MULT * 100ULL, evendivisor * (unsigned long)bands[band].freq * MASTER_CLK_MULT * 100ULL, SI5351_CLK0);
+      si5351.set_freq_manual((unsigned long)bands[band].freq * MASTER_CLK_MULT * 100ULL, evendivisor * (unsigned long)bands[band].freq * MASTER_CLK_MULT * 100ULL, SI5351_CLK2);
+      si5351.set_phase(SI5351_CLK0, 0);
+      si5351.set_phase(SI5351_CLK2, evendivisor);
+      if (evendivisor != oldevendivisor) { //reset if evendivisor is changed
+        si5351.pll_reset(SI5351_PLLA);
+        oldevendivisor = evendivisor;
+      }
+#else
+      si5351.set_freq((unsigned long)bands[band].freq * MASTER_CLK_MULT * 100ULL, SI5351_CLK0);
+#endif
+      show_frequency(bands[band].freq + IF_FREQ);  // frequency we are listening to
+    }
+//    else if (SW_val >= 466 && SW_val <= 476) {
+//      Serial.println("TX");
+//    }
+    else if (SW_val >= 466 && SW_val <= 476) {
+      Serial.println("UP");
+      if(++band > LAST_BAND) band=FIRST_BAND; // cycle thru radio bands 
+      show_band(bands[band].name); // show new band
+      setup_RX(bands[band].mode, bands[band].bandwidthU, bands[band].bandwidthL);
+#ifdef SI5351_PHASED
+      vfomhz = bands[band].freq/10000;
+#ifdef DEBUG
+      Serial.print("VFOmhz is ");
+      Serial.println(vfomhz);
+#endif
+      alteraevendivisor();   
+      si5351.set_freq_manual((unsigned long)bands[band].freq * MASTER_CLK_MULT * 100ULL, evendivisor * (unsigned long)bands[band].freq * MASTER_CLK_MULT * 100ULL, SI5351_CLK0);
+      si5351.set_freq_manual((unsigned long)bands[band].freq * MASTER_CLK_MULT * 100ULL, evendivisor * (unsigned long)bands[band].freq * MASTER_CLK_MULT * 100ULL, SI5351_CLK2);
+      si5351.set_phase(SI5351_CLK0, 0);
+      si5351.set_phase(SI5351_CLK2, evendivisor);
+      if (evendivisor != oldevendivisor) { //reset if evendivisor is changed
+        si5351.pll_reset(SI5351_PLLA);
+        oldevendivisor = evendivisor;
+      }
+#else
+      si5351.set_freq((unsigned long)bands[band].freq * MASTER_CLK_MULT * 100ULL, SI5351_CLK0);
+#endif
+      show_frequency(bands[band].freq + IF_FREQ);  // frequency we are listening to
+    }
+    else if (SW_val >= 500 && SW_val <= 510) {
+      Serial.println("ANT_SW");
+    }
+    else if (SW_val >= 523 && SW_val <= 533) {
+      Serial.println("MODE_LFT");
+    }
+    else if (SW_val >= 547 && SW_val <= 557) {
+      Serial.println("MODE_RGT");
+    }
+    else if (SW_val >= 568 && SW_val <= 578) {
+      Serial.println("P.AMP_ATT");
+    }
+    else if (SW_val >= 589 && SW_val <= 599) {
+      Serial.println("FILTER");
+    }
+    else if (SW_val >= 600 && SW_val <= 610) {
+      Serial.println("MENU");
+    }
+   
+/*    if (SW_val >= ?? && SW_val <= ??) {
+      Serial.println("MULTI");
+    }
+*/
     
 //#ifdef DEBUG
 //  Serial.println("audioShield volume skipped");
@@ -553,39 +675,14 @@ void loop() {
     else modesw_state=0; // flag switch not pressed
   
     if (!digitalRead(BandSW)) {
-       if (Bandsw_state==0) { // switch was pressed - falling edge
-         if(++band > LAST_BAND) band=FIRST_BAND; // cycle thru radio bands 
-         show_band(bands[band].name); // show new band
-//         setup_mode(bands[band].mode); 
-         setup_RX(bands[band].mode, bands[band].bandwidthU, bands[band].bandwidthL);
-
-#ifdef SI5351_PHASED
-    vfomhz = bands[band].freq/10000;
-#ifdef DEBUG
-  Serial.print("VFOmhz is ");
-  Serial.println(vfomhz);
-#endif
-    alteraevendivisor();   
-    si5351.set_freq_manual((unsigned long)bands[band].freq * MASTER_CLK_MULT * 100ULL, evendivisor * (unsigned long)bands[band].freq * MASTER_CLK_MULT * 100ULL, SI5351_CLK0);
-    si5351.set_freq_manual((unsigned long)bands[band].freq * MASTER_CLK_MULT * 100ULL, evendivisor * (unsigned long)bands[band].freq * MASTER_CLK_MULT * 100ULL, SI5351_CLK2);
-
-    si5351.set_phase(SI5351_CLK0, 0);
-    si5351.set_phase(SI5351_CLK2, evendivisor);
-    if (evendivisor != oldevendivisor) { //reset if evendivisor is changed
-      si5351.pll_reset(SI5351_PLLA);
-      oldevendivisor = evendivisor;
-    }
-
-#else
-//         si5351.set_freq((unsigned long)bands[band].freq * MASTER_CLK_MULT, SI5351_PLL_FIXED, SI5351_CLK0);
-           si5351.set_freq((unsigned long)bands[band].freq * MASTER_CLK_MULT * 100ULL, SI5351_CLK0);
-#endif
-         show_frequency(bands[band].freq + IF_FREQ);  // frequency we are listening to
+       if (Bandsw_state==0) {
          Bandsw_state=1; // flag switch is pressed
        }
     }
     else Bandsw_state=0; // flag switch not pressed  
-  }    
+  }
+
+// end of 50 ms switches check
 
 #ifdef SW_AGC
   agc();  // Automatic Gain Control function
@@ -783,5 +880,14 @@ void alteraevendivisor()
   if ((vfomhz >= 15000) && (vfomhz < 22000)) {
     evendivisor = 4;
   }
+}
+#endif
+
+#ifdef DEBUG
+void SW_read() // debugg of the switch pin 
+{ 
+  SW_val = analogRead(BTN_PIN);    // read the switch input pin
+  Serial.print("SW_pin value is ");
+  Serial.println(SW_val);          // debug value
 }
 #endif
