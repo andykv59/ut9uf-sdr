@@ -112,7 +112,7 @@ extern void show_frequency(long int freq);                    // show frequency
 extern void show_tunestep (String S);                         // show tune step
 extern void show_bandwidth (int M, long int FU, long int FL); // show filter bandwidth
 extern void show_notch (int notchF, int MODE);                // show notch
-
+extern void show_switch_menu(void);                           // show switch state 
 
 /*extern void setup_display(void);         // Initialize TFT
 extern void intro_display(void);         // Show welcome screen
@@ -402,18 +402,7 @@ void setup(void) {
   tft.setRotation(3);           // 1 = Normal  0 = 90° 2 = 90° 3 = up-side-down
   tft.fillScreen(BLACK);        // BLACK
   setup_display();
-  
-//  intro_display();
-//  delay(4000);
-
-//  main_display();
-
-  
-  //delay(4000);
-  //tft.fillScreen(BLACK);
-  //tft.setCursor(0, 115);
-  //tft.drawFastVLine(80, 0,60,RED);
-  
+    
 #ifdef DEBUG
   Serial.println("setup-display ... done");
 #endif  
@@ -437,7 +426,9 @@ void setup(void) {
   tft.fillRect(pos_x_frequency-24, pos_y_frequency, 220, 16, BLACK);    // Clear startup text
   tft.fillRect(pos_x_time, pos_y_time, 240, 8, BLACK);                   // erase for time display
 
-  
+  // show switch state menu
+  show_switch_menu();
+
   // set up initial band and frequency
   show_band(bands[STARTUP_BAND].name);
   show_tunestep(tune_text);
@@ -558,6 +549,7 @@ void loop() {
  */
     
     SW_val = analogRead(BTN_PIN);
+    if (SW_val < 1000) {    // if no analogpin change skip all ifs 
     if (SW_val >= 1 && SW_val <= 5) {
       Serial.println("A_B");
     }
@@ -706,7 +698,7 @@ void loop() {
     }
     else Bandsw_state=0; // flag switch not pressed  
 */
-    
+    } // if no analogpin change ends here
   } // end of ms_50 check
 // end of 50 ms switches check
 

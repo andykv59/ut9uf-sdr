@@ -7,10 +7,6 @@
 //#include <Adafruit_ST7735.h>    // Hardware-specific library ST7735
 #include <Adafruit_ILI9341.h>     // Hardware-specific library ILI9341
 
-//#define pos_x_smeter 5
-//#define pos_y_smeter 80
-//#define s_w 10
-
 //int pos_centre_f = 200; // Rx above IF, IF = 5515 190
 int pos_centre_f = 80; // Rx above IF, IF = 5515 190
 
@@ -45,23 +41,6 @@ extern AudioAnalyzeFFT256  myFFT;      // FFT for Spectrum Display
 
 //void show_s_meter_layout(void);
 //extern AudioAnalyzePeak Smeter;
-
-/*void setup_display(void) {
-  
-// initialize the LCD display
-//  tft.init();
-  tft.begin();
-  tft.setRotation(3);
-  tft.fillScreen(BLACK);
-
-  //tft.initR(INITR_BLACKTAB);   // initialize a ST7735 chip, black tab
-  //tft.setRotation(1);          // 1 - pins on the right side, 1 -90,2 +90,3 +180 
-  tft.setTextColor(WHITE);
-  tft.setTextWrap(true); 
-  // Show mid screen tune position
-  // tft.drawFastVLine(80, 0,60,RED);
-}
-*/
 
 void setup_display(void) {
   tft.setTextColor(WHITE);
@@ -108,39 +87,6 @@ void setup_display(void) {
   tft.setCursor(pos_x_smeter + 120, pos_y_smeter - 13);
   tft.print("+20dB");
 } // end void setupdisplay
-
-
-
-/*void intro_display(void) {
-  //tft.setFont(&FreeSans12pt7b);
-  tft.setTextColor(WHITE);
-  tft.setTextWrap(true);
-  tft.setCursor(0, 30);
-  tft.print("UT9UF AMSAT SDR");
-  //tft.setFont(&FreeSans9pt7b);
-  tft.setCursor(0, 50);
-  tft.print("by Andy");
-  tft.setCursor(0, 80);
-  tft.print("origins PA3BYA VE3MKC");
-  tft.setCursor(0, 100);
-  tft.print("version: 0.1");
-  //tft.print(MAIN_VERSION_NUMBER);
-  tft.setCursor(0, 120);
-  tft.print("build: ");
-  tft.print(__DATE__);
-}
-
-void main_display(void) {
-  tft.fillScreen(BLACK);
-  //tft.setFont(&FreeSans9pt7b);
-  tft.setFont();
-  tft.setCursor(0, 115);
-  tft.print("UT9UF SDR");
-  // Show mid screen tune position
-  tft.drawFastVLine(80, 0, 60, RED);
-  show_s_meter_layout();
-}
-*/
 
 // draw the spectrum display and S-meter
 // this version draws 1/10 of the spectrum per call (32 pixels) but we run it 10x the speed
@@ -248,28 +194,6 @@ void show_spectrum(float line_gain, float LPFcoeff, int M) {
 // this version draws 1/10 of the spectrum per call but we run it 10x the speed
 // this allows other stuff to run without blocking for so long
 
-/*void show_spectrum(void) {
-  static int startx=0, endx;
-  endx=startx+16;
-  int scale=1;
-//digitalWrite(DEBUG_PIN,1); // for timing measurements
-  
-  for (int16_t x=startx; x < endx; x+=2) 
-  {
-    int bar=abs(myFFT.output[x*8/10])/scale;
-    if (bar >60) bar=60;
-    if(x!=80)
-    {
-       tft.drawFastVLine(x, 60-bar,bar, YELLOW);
-       tft.drawFastVLine(x, 0, 60-bar, BLACK);    
-    }
-  }
-  startx+=16;
-  if(startx >=160) startx=0;
-//digitalWrite(DEBUG_PIN,0); // 
-}
-*/
-
 // waterfall dsiplay
 void show_waterfall(void) {
   // experimental waterfall display for CW -
@@ -330,14 +254,6 @@ void show_bandwidth (int M, long int FU, long int FL) {
     int leL = bwhelp*32/spectrum_span;      // Max 58
     float kHz = (FU + FL) / 1000.0;
 
-// print BW text  
-//    tft.fillRect(pos_x_mode, pos_y_frequency+3, 72, 22, BLACK); // erase old BW string
-//    tft.setCursor(pos_x_mode, pos_y_frequency+3);
-//    sprintf(string,"%02.1fk",kHz);
-//    tft.setTextSize(2);
-//    tft.setTextColor(GREEN);
-//    tft.print(string);
-
     zaehler = 3;
 
     while (zaehler--) {             // Get BW digits
@@ -346,7 +262,6 @@ void show_bandwidth (int M, long int FU, long int FL) {
     }
     Serial.println(kHz);
 //  2: 10KHz  1: 1KHz, 0: 100Hz
-
     tft.setTextSize(2);
     tft.setTextColor(GREEN);  
     zaehler = 3;
@@ -413,76 +328,6 @@ void show_bandwidth (int M, long int FU, long int FL) {
   tft.setTextSize(1);
 }  // end of show bandwidth, mode and markers
 
-
-/*void show_bandwidth(int filtermode) { 
-  tft.drawFastHLine(0,61,160, BLACK); // erase old indicator
-  tft.drawFastHLine(0,62,160, BLACK); // erase old indicator 
-  tft.drawFastHLine(0,63,160, BLACK); // erase old indicator
-     
-  switch (filtermode)	{
-    case LSB_NARROW:
-      tft.drawFastHLine(72,61,6, RED);
-      tft.drawFastHLine(72,62,6, RED);
-      tft.drawFastHLine(72,63,6, RED);
-    break;
-    case LSB_WIDE:
-      tft.drawFastHLine(61,61,20, RED);
-      tft.drawFastHLine(61,62,20, RED);
-      tft.drawFastHLine(61,63,20, RED);
-    break;
-    case USB_NARROW:
-      tft.drawFastHLine(83,61,6, RED);
-      tft.drawFastHLine(83,62,6, RED);
-      tft.drawFastHLine(83,63,6, RED);
-    break;
-    case USB_WIDE:
-      tft.drawFastHLine(80,61,20, RED);
-      tft.drawFastHLine(80,62,20, RED);
-      tft.drawFastHLine(80,63,20, RED);
-    break;
-  }
-}  
-*/
-/*
-void show_s_meter_layout() {
-  tft.drawFastHLine (pos_x_smeter, pos_y_smeter - 1, 9 * s_w, WHITE);
-  tft.drawFastHLine (pos_x_smeter, pos_y_smeter + 3, 9 * s_w, WHITE);
-  tft.fillRect(pos_x_smeter, pos_y_smeter - 3, 2, 2, WHITE);
-  tft.fillRect(pos_x_smeter + 8 * s_w, pos_y_smeter - 3, 2, 2, WHITE);
-  tft.fillRect(pos_x_smeter + 2 * s_w, pos_y_smeter - 3, 2, 2, WHITE);
-  tft.fillRect(pos_x_smeter + 4 * s_w, pos_y_smeter - 3, 2, 2, WHITE);
-  tft.fillRect(pos_x_smeter + 6 * s_w, pos_y_smeter - 3, 2, 2, WHITE);
-  tft.fillRect(pos_x_smeter + 7 * s_w, pos_y_smeter - 4, 2, 3, WHITE);
-  tft.fillRect(pos_x_smeter + 3 * s_w, pos_y_smeter - 4, 2, 3, WHITE);
-  tft.fillRect(pos_x_smeter + 5 * s_w, pos_y_smeter - 4, 2, 3, WHITE);
-  tft.fillRect(pos_x_smeter + s_w, pos_y_smeter - 4, 2, 3, WHITE);
-  tft.fillRect(pos_x_smeter + 9 * s_w, pos_y_smeter - 4, 2, 3, WHITE);
-  tft.drawFastHLine (pos_x_smeter + 9 * s_w, pos_y_smeter - 1, 3 * s_w * 2 + 2, GREEN);
-  tft.drawFastHLine (pos_x_smeter + 9 * s_w, pos_y_smeter + 3, 3 * s_w * 2 + 2, GREEN);
-  tft.fillRect(pos_x_smeter + 11 * s_w, pos_y_smeter - 4, 2, 3, GREEN);
-  tft.fillRect(pos_x_smeter + 13 * s_w, pos_y_smeter - 4, 2, 3, GREEN);
-  tft.fillRect(pos_x_smeter + 15 * s_w, pos_y_smeter - 4, 2, 3, GREEN);
-  tft.drawFastVLine (pos_x_smeter - 1, pos_y_smeter - 1, 5, WHITE);
-  tft.drawFastVLine (pos_x_smeter + 15 * s_w + 2, pos_y_smeter - 1, 5, GREEN);
-
-  tft.setFont();
-  tft.setCursor(pos_x_smeter - 4, pos_y_smeter - 13);
-  tft.setTextColor(WHITE);
-  tft.setTextWrap(true);
-  tft.print("S 1");
-  tft.setCursor(pos_x_smeter + 28, pos_y_smeter - 13);
-  tft.print("3");
-  tft.setCursor(pos_x_smeter + 48, pos_y_smeter - 13);
-  tft.print("5");
-  tft.setCursor(pos_x_smeter + 68, pos_y_smeter - 13);
-  tft.print("7");
-  tft.setCursor(pos_x_smeter + 88, pos_y_smeter - 13);
-  tft.print("9");
-  tft.setCursor(pos_x_smeter + 120, pos_y_smeter - 13);
-  tft.print("+20dB");
-}
-*/
-
 // show tunestep
 void show_tunestep(String S) {
   //char string[80]; 
@@ -492,18 +337,6 @@ void show_tunestep(String S) {
   tft.print(S);
   tft.setTextColor(WHITE);
 }
-
-
-/*
-// show signal strength
-void show_signalstrength(String s) {
-  //tft.setFont(&FreeSans9pt7b);
-  tft.fillRect(12, 72, 40, 14, BLACK);
-  tft.setCursor(0, 85);
-  tft.print(s);
-}
-
-*/
 
 // show band
 void show_band(String bandname) {
@@ -696,59 +529,53 @@ void show_frequency(long int freq) {
   tft.setTextColor(WHITE);  
 }    
 
-// show S-meter
-/*
-void show_Smeter(void) {
-  float s_sample = 0;  // Raw signal strength (max per 1ms)
-  // Collect S-meter data
-  if (Smeter.available()) s_sample = Smeter.read(); // Highest sample within 1 millisecond
-  // Calculate S units. 50uV = S9
-  uv = (s_sample - 0.005) * 10000; // microvolts, roughly calibrated
-  if (uv < 0.1) uv = 0.1; // protect for negative uv
-  uv = 0.3 * uv + 0.7 * uvold; // low pass filtering for Smeter values
-  dbuv = 20.0 * log10(uv);
-  s = 1.0 + (14.0 + dbuv) / 6.0;
+// show switches state 
 
-#ifdef DEBUG_SMETER
-  if (five_sec.check() == 1)
-  {
-    Serial.print("s_sample = ");
-    Serial.print(s_sample);
-    Serial.print(" uv = ");
-    Serial.print(uv);
-    Serial.print(" s =");
-    Serial.print(s);
-    Serial.print(" dbuv = ");
-    Serial.print(dbuv);
-    Serial.println("");
-  }
-#endif
-  if (s < 0.0) s = 0.0;
-  if (s > 9.0)
-  {
-    dbuv = dbuv - 34.0;
-    s = 9.0;
-  }
-  else dbuv = 0;
-  uvold = uv;
+void show_switch_menu(void) {
+  tft.fillRect(pos_x_but_ant, pos_y_but_ant, 140, 80, BLACK);        // erase old menu
+  tft.setTextColor(WHITE);
+  
+  tft.drawRect(pos_x_but_ant, pos_y_but_ant, 40, 20, BLUE);        // switch state ANT
+  tft.setCursor(pos_x_but_ant+6, pos_y_but_ant+7);
+  tft.print("ANT 1");
 
-  tft.drawFastHLine(pos_x_smeter, pos_y_smeter, s * s_w + 1, YELLOW);
-  tft.drawFastHLine(pos_x_smeter + s * s_w + 1, pos_y_smeter, (9 * s_w + 1) - s * s_w + 1, BLACK);
+  tft.drawRect(pos_x_but_ab, pos_y_but_ab, 40, 20, BLUE);          // switch state A/B
+  tft.setCursor(pos_x_but_ab+12, pos_y_but_ab+7);
+  tft.print("A\\B");
 
-  tft.drawFastHLine(pos_x_smeter, pos_y_smeter + 1, s * s_w + 1, YELLOW);
-  tft.drawFastHLine(pos_x_smeter + s * s_w + 1, pos_y_smeter + 1, (9 * s_w + 1) - s * s_w + 1, BLACK);
-  tft.drawFastHLine(pos_x_smeter, pos_y_smeter + 2, s * s_w + 1, YELLOW);
-  tft.drawFastHLine(pos_x_smeter + s * s_w + 1, pos_y_smeter + 2, (9 * s_w + 1) - s * s_w + 1, BLACK);
+  tft.drawRect(pos_x_but_sat, pos_y_but_sat, 40, 20, BLUE);          // switch state SAT
+  tft.setCursor(pos_x_but_sat+11, pos_y_but_sat+7);
+  tft.print("SAT");
+  
+  tft.drawRect(pos_x_but_pamp, pos_y_but_pamp, 40, 20, BLUE);        // switch state P.AMP
+  tft.setCursor(pos_x_but_pamp+6, pos_y_but_pamp+7);
+  tft.print("P.AMP");
 
-  //   tft.drawFastHLine(pos_x_smeter, pos_y_smeter+3, s*s_w+1, BLUE);
-  //   tft.drawFastHLine(pos_x_smeter+s*s_w+1, pos_y_smeter+3, (9*s_w+1)-s*s_w+1, BLACK);
+  tft.drawRect(pos_x_but_split, pos_y_but_split, 40, 20, BLUE);          // switch state SPLIT
+  tft.setCursor(pos_x_but_split+5, pos_y_but_split+7);
+  tft.print("SPLIT");
 
-  if (dbuv > 30) dbuv = 30;
-  tft.drawFastHLine(pos_x_smeter + 9 * s_w + 1, pos_y_smeter, (dbuv / 5)*s_w + 1, RED);
-  tft.drawFastHLine(pos_x_smeter + 9 * s_w + (dbuv / 5)*s_w + 1, pos_y_smeter, (6 * s_w + 1) - (dbuv / 5)*s_w, BLACK);
-  tft.drawFastHLine(pos_x_smeter + 9 * s_w + 1, pos_y_smeter + 1, (dbuv / 5)*s_w + 1, RED);
-  tft.drawFastHLine(pos_x_smeter + 9 * s_w + (dbuv / 5)*s_w + 1, pos_y_smeter + 1, (6 * s_w + 1) - (dbuv / 5)*s_w, BLACK);
-  tft.drawFastHLine(pos_x_smeter + 9 * s_w + 1, pos_y_smeter + 2, (dbuv / 5)*s_w + 1, RED);
-  tft.drawFastHLine(pos_x_smeter + 9 * s_w + (dbuv / 5)*s_w + 1, pos_y_smeter + 2, (6 * s_w + 1) - (dbuv / 5)*s_w, BLACK);
+  tft.drawRect(pos_x_but_vm, pos_y_but_vm, 40, 20, BLUE);          // switch state V/M
+  tft.setCursor(pos_x_but_vm+11, pos_y_but_vm+7);
+  tft.print("V\\M");
+  
+  tft.drawRect(pos_x_but_filter, pos_y_but_filter, 40, 20, BLUE);        // switch state FILTER
+  tft.setCursor(pos_x_but_filter+3, pos_y_but_filter+7);
+  tft.print("FILTER");
+
+  tft.drawRect(pos_x_but_fast, pos_y_but_fast, 40, 20, BLUE);          // switch state FAST/LOCK
+  tft.setCursor(pos_x_but_fast+9, pos_y_but_fast+7);
+  tft.print("FAST");
+
+  tft.drawRect(pos_x_but_rit, pos_y_but_rit, 40, 20, BLUE);          // switch state RIT
+  tft.setCursor(pos_x_but_rit+11, pos_y_but_rit+7);
+  tft.print("RIT");
+
+  tft.drawCircle(pos_x_but_txrx,pos_y_but_txrx, 12, GREEN);         // TX/RX switch state
+  tft.fillCircle(pos_x_but_txrx,pos_y_but_txrx, 10, GREEN); 
+  tft.setCursor(pos_x_but_txrx-5, pos_y_but_txrx-3);
+  tft.setTextColor(BLACK);
+  tft.print("RX");
+ 
+  tft.setTextColor(WHITE);
 }
-*/

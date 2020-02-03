@@ -26,12 +26,12 @@
 //
 #define pos_spectrum    100   // y position of spectrum display
 #define pos_version     230   // position of version number printing
-#define pos_x_frequency 80    // Frequency display  60
-#define pos_y_frequency 150   // 
+#define pos_x_frequency 60    // Frequency display 
+#define pos_y_frequency 140   // 
 #define pos_x_mode      10    // Rx mode display
 #define pos_y_mode      120   //  
-#define pos_x_smeter    100   // S-meter display  80
-#define pos_y_smeter    130   // 
+#define pos_x_smeter    80   // S-meter display  80
+#define pos_y_smeter    125   // 
 
 #define pos_x_date      150   // Date display
 #define pos_y_date      230   // 
@@ -45,6 +45,37 @@
 #define pos_y_message   195
 #define pos_x_battery   10    // Battery display
 #define pos_y_battery   210
+
+#define pos_x_but_ant    177    // Antenna switch button in swith state
+#define pos_y_but_ant    3
+#define pos_x_but_ab     227    // A/B switch button in swith state
+#define pos_y_but_ab     3
+#define pos_x_but_sat    277    // SAT switch button in swith state
+#define pos_y_but_sat    3
+#define pos_x_but_pamp   177    // P.AMP/ATT switch button in swith state
+#define pos_y_but_pamp   33
+#define pos_x_but_split  227    // SPLIT switch button in swith state
+#define pos_y_but_split  33
+#define pos_x_but_vm     277    // V/M switch button in swith state
+#define pos_y_but_vm     33
+#define pos_x_but_filter 177    // Filter switch button in swith state
+#define pos_y_but_filter 63
+#define pos_x_but_fast   227    // FAST/Lock switch button in swith state
+#define pos_y_but_fast   63
+#define pos_x_but_rit    277    // RIT switch button in swith state
+#define pos_y_but_rit    63
+#define pos_x_but_txrx   297    // TX/RX swith state circle
+#define pos_y_but_txrx   108
+
+
+#define pos_x_menu_m1    10    // touch Menu 1 button
+#define pos_y_menu_m1    200
+#define pos_x_menu_m2    90    // touch Menu 2 button
+#define pos_y_menu_m2    200
+#define pos_x_menu_m3    167    // touch Menu 3 button
+#define pos_y_menu_m3    200
+#define pos_x_menu_m4    247    // touch Menu 4 button
+#define pos_y_menu_m4    200
 
 #define notchpos        2     // Notch filter
 #define notchL          15
